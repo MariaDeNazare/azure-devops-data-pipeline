@@ -1,0 +1,41 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+# -------------------------------
+# Configurar versão do Python
+# -------------------------------
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+    addToPath: true
+  displayName: 'Set Python version'
+
+# -------------------------------
+# Instalar dependências Python
+# -------------------------------
+- script: |
+    python -m pip install --upgrade pip
+    pip install requests pyodbc
+  displayName: 'Install Python dependencies'
+
+# -------------------------------
+# Instalar ODBC Driver (SQL Server)
+# -------------------------------
+- script: |
+    curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+    sudo add-apt-repository "$(curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list)"
+    sudo apt-get update
+    sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
+  displayName: 'Install SQL Server ODBC Driver'
+
+# -------------------------------
+# Executar scripts de ingestão
+# -------------------------------
+- script: |
+    python src/ingest_data_pipeline.py
+  displayName: 'Run data ingestion pipeline'
